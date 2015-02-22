@@ -1,0 +1,5 @@
+/target
+/classes
+*.jar
+*.class
+nb-configuration.xml
