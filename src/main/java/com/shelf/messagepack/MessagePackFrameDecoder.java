@@ -134,7 +134,7 @@ public class MessagePackFrameDecoder extends ReplayingDecoder<Void> {
         }
 
         int readerIndex = in.readerIndex() + offset;
-        short b = in.getUnsignedByte(in.readerIndex());
+        short b = in.getUnsignedByte(readerIndex);
         int ubyte = b & 0xff;
 
         LOGGER.trace("message: " + toHex(ubyte));
