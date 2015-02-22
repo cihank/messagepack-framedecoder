@@ -111,10 +111,10 @@ public class MessagePackFrameDecoder extends ReplayingDecoder<Void> {
         }
     }
 
-    protected int getArraySize(ChannelHandlerContext ctx, ByteBuf in, int headerLength, int offset, long arraySize) throws Exception {
-        long currentLength = 0;
+    protected int getArraySize(ByteBuf in, int headerLength, int offset, long arraySize) throws Exception {
+        long currentLength = headerLength;
         for(long i = 0; i < arraySize; i++) {
-            currentLength += decodeLength(ctx, in, offset);
+            currentLength += decodeLength(in, (int)(offset + currentLength));
         }
         if(currentLength > Integer.MAX_VALUE) {
             throw new CorruptedFrameException("Length of Array or Map is too long (exceeded Integer.MAX_VALUE. Can not continue calculation of length.");
@@ -122,7 +122,7 @@ public class MessagePackFrameDecoder extends ReplayingDecoder<Void> {
         return (int)currentLength;
     }
 
-    protected long decodeLength(ChannelHandlerContext ctx, ByteBuf in, int offset) throws Exception {
+    protected long decodeLength(ByteBuf in, int offset) throws Exception {
         if (discardingTooLongFrame) {
             long bytesToDiscard = this.bytesToDiscard;
             int localBytesToDiscard = (int) Math.min(bytesToDiscard, in.readableBytes());
@@ -215,29 +215,29 @@ public class MessagePackFrameDecoder extends ReplayingDecoder<Void> {
         }
         case ARRAY16: {
             int elemCount = in.getUnsignedShort(readerIndex + 1);
-            return getArraySize(ctx, in, 3, offset, elemCount);
+            return getArraySize(in, 3, offset, elemCount);
         }
         case ARRAY32: {
             long elemCount = in.getUnsignedInt(readerIndex + 1);
-            return getArraySize(ctx, in, 5, offset, elemCount);
+            return getArraySize(in, 5, offset, elemCount);
         }
         case MAP16: {
             int elemCount = in.getUnsignedShort(readerIndex + 1);
-            return getArraySize(ctx, in, 3, offset, elemCount * 2);
+            return getArraySize(in, 3, offset, elemCount * 2);
         }
         case MAP32: {
             long elemCount = in.getUnsignedInt(readerIndex + 1);
-            return getArraySize(ctx, in, 5, offset, elemCount * 2);
+            return getArraySize(in, 5, offset, elemCount * 2);
         }
         default:
             if ((ubyte >> 7) == 0) { //positive fixint
                 return 1L;
             } else if ((ubyte >> 4) == 0b1000) { //fixmap
                 int elemCount = ubyte & 0b00001111;
-                return getArraySize(ctx, in, 1, offset, elemCount * 2);
+                return getArraySize(in, 1, offset, elemCount * 2);
             } else if ((ubyte >> 4) == 0b1001) { //fixarray
                 int elemCount = ubyte & 0b00001111;
-                return getArraySize(ctx, in, 1, offset, elemCount);
+                return getArraySize(in, 1, offset, elemCount);
             } else if ((ubyte >> 5) == 0b101) { //fixstr
                 int length = ubyte & 0b00011111;
                 return 1L + length;
@@ -251,7 +251,7 @@ public class MessagePackFrameDecoder extends ReplayingDecoder<Void> {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        long frameLength = decodeLength(ctx, in, 0);
+        long frameLength = decodeLength(in, 0);
         if(frameLength > maxFrameLength) {
             long discard = frameLength - in.readableBytes();
             tooLongFrameLength = frameLength;
