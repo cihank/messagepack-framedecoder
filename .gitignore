@@ -3,3 +3,6 @@
 *.jar
 *.class
 nb-configuration.xml
+.classpath
+.project
+.settings/

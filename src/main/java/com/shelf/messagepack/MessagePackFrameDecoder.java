@@ -75,8 +75,12 @@ public class MessagePackFrameDecoder extends ReplayingDecoder<Void> {
     }
 
     protected ByteBuf extractFrame(ChannelHandlerContext ctx, ByteBuf buffer, int index, int length) {
+        // make a sliced buffer for reading full contents. If enough data doesn't reached yet, 
+        // ReplayingDecoder will throw an error for replaying decode operation.
+        // Don't create a new buffer before enought data has come. It will not be release ( and leaked).
+        ByteBuf slice = buffer.slice(index, length);
         ByteBuf frame = ctx.alloc().buffer(length);
-        frame.writeBytes(buffer, index, length);
+        frame.writeBytes(slice, 0, length);
         return frame;
     }
 
