@@ -20,7 +20,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.ReplayingDecoder;
 import io.netty.handler.codec.TooLongFrameException;
+
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,7 +128,7 @@ public class MessagePackFrameDecoder extends ReplayingDecoder<Void> {
         return (int)currentLength;
     }
 
-    protected long decodeLength(ByteBuf in, int offset) throws Exception {
+    public long decodeLength(ByteBuf in, int offset) throws Exception {
         if (discardingTooLongFrame) {
             long bytesToDiscard = this.bytesToDiscard;
             int localBytesToDiscard = (int) Math.min(bytesToDiscard, in.readableBytes());
